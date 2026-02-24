@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Scanner Presensi SMPN 1 Maba</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { background-color: #0f141e; color: #ffffff; font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
+    h1 { color: #2ecc71; margin-bottom: 5px; font-size: 24px; }
+    .subtitle { color: #8b9bb4; font-size: 14px; margin-bottom: 25px; }
+    #reader-container { background-color: #000000; border-radius: 12px; padding: 5px; margin: 0 auto; max-width: 400px; }
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid #2ecc71; }
+    #error-box { background-color: #1e2532; color: #ff6b6b; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 400px; display: none; font-size: 14px; border: 1px solid #3a4556; }
+    #success-box { background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 400px; display: none; font-weight: bold; }
+    .footer-status { color: #5c6b82; font-size: 12px; margin-top: 20px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>SCANNER PRESENSI</h1>
+  <p class="subtitle">Mode Pos Satpam / Gerbang</p>
+  <div id="reader-container"><div id="reader"></div></div>
+  <div id="error-box"></div>
+  <div id="success-box"></div>
+  <div class="footer-status">
+    <span id="cam-status">Kamera: Belakang</span><br>
+    <span id="db-status">Menunggu Scan...</span><br>
+    <span id="gps-status">GPS: Memeriksa Lokasi...</span>
+  </div>
+
+  <script>
+    // MASUKKAN URL GOOGLE SCRIPT (/exec) ANDA DI SINI
+    const scriptURL = "https://script.google.com/macros/s/AKfycbywklgPKezNcO31uAgItgSd84wf72He9mGh-LozS5AGUK2hE5KM1V14DPn-4SHeDrB5/exec"; 
+
+    const errorBox = document.getElementById('error-box');
+    const successBox = document.getElementById('success-box');
+    const dbStatus = document.getElementById('db-status');
+    const gpsStatus = document.getElementById('gps-status');
+    let html5QrcodeScanner;
+    let userLat = ""; let userLng = "";
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(p => {
+          userLat = p.coords.latitude; userLng = p.coords.longitude;
+          gpsStatus.innerText = "GPS: " + userLat.toFixed(5) + ", " + userLng.toFixed(5);
+          gpsStatus.style.color = "#2ecc71";
+        }, e => { gpsStatus.innerText = "GPS: Izin Ditolak"; gpsStatus.style.color = "#ff6b6b"; }, { enableHighAccuracy: true });
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      html5QrcodeScanner.pause();
+      successBox.style.display = 'block';
+      successBox.innerHTML = "Mengirim Data: " + decodedText;
+      
+      // Kirim ke Google Apps Script menggunakan fetch (POST)
+      const formData = new FormData();
+      formData.append("id", decodedText);
+      formData.append("lat", userLat);
+      formData.append("lng", userLng);
+
+      fetch(scriptURL, { method: "POST", body: formData })
+      .then(res => res.text())
+      .then(response => {
+        successBox.innerHTML = "✅ " + response;
+        setTimeout(() => { successBox.style.display = 'none'; html5QrcodeScanner.resume(); }, 2500);
+      })
+      .catch(err => {
+        errorBox.style.display = 'block';
+        errorBox.innerHTML = "Gagal Kirim ke Server. Cek Koneksi.";
+        setTimeout(() => { errorBox.style.display = 'none'; html5QrcodeScanner.resume(); }, 3000);
+      });
+    }
+
+    window.onload = function() {
+      getLocation();
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess)
+      .catch(err => {
+        errorBox.style.display = 'block';
+        errorBox.innerHTML = "Error Kamera: " + err;
+      });
+    };
+  </script>
+</body>
+</html>
