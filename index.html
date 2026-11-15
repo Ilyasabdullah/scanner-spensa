@@ -8,42 +8,15 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    body { 
-        background: linear-gradient(135deg, #0f172a, #1e1b4b); 
-        color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        margin: 0; padding: 20px; text-align: center; min-height: 100vh;
-    }
-    .glass-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 20px;
-        max-width: 420px;
-        margin: 0 auto;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-    }
+    body { background: linear-gradient(135deg, #0f172a, #1e1b4b); color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; text-align: center; min-height: 100vh; }
+    .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 20px; max-width: 420px; margin: 0 auto; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
     h1 { color: #60a5fa; margin-bottom: 5px; font-size: 24px; letter-spacing: 1px; }
     .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
-    select { 
-        width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 12px; 
-        background: rgba(15, 23, 42, 0.8); color: white; 
-        border: 1px solid #3b82f6; font-size: 15px; font-weight: bold;
-        outline: none; transition: 0.3s;
-    }
-    select:focus { border-color: #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
-    #reader-container { 
-        background-color: #000; border-radius: 12px; padding: 5px; 
-        border: 2px solid rgba(59, 130, 246, 0.5); overflow: hidden; 
-    }
+    select { width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 12px; background: rgba(15, 23, 42, 0.8); color: white; border: 1px solid #3b82f6; font-size: 15px; font-weight: bold; outline: none; transition: 0.3s; }
+    #reader-container { background-color: #000; border-radius: 12px; padding: 5px; border: 2px solid rgba(59, 130, 246, 0.5); overflow: hidden; position: relative;}
     #reader { width: 100%; border-radius: 8px; }
-    .btn-kamera { 
-        background: linear-gradient(to right, #2563eb, #4f46e5); color: white; border: none; 
-        padding: 14px 20px; font-size: 15px; border-radius: 12px; cursor: pointer; 
-        margin-top: 20px; width: 100%; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-    }
-    .btn-kamera:active { transform: scale(0.98); }
+    .btn-kamera { background: linear-gradient(to right, #2563eb, #4f46e5); color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+    #gps-status { font-size: 11px; margin-top: 15px; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -60,87 +33,84 @@
 
       <div id="reader-container"><div id="reader"></div></div>
       <button class="btn-kamera" onclick="gantiKamera()">🔄 Ganti Kamera</button>
+      <div id="gps-status">📍 Menunggu Izin Lokasi (GPS)...</div>
   </div>
 
   <script>
     const urlServer = "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec"; 
-    
-    // Inisialisasi Audio Bunyi Beep
     const beepSound = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3");
 
     let html5QrcodeScanner, modeKamera = "environment", isScanning = false;
-    let scanQueue = JSON.parse(localStorage.getItem('eskulQueue')) || [];
+    let userLat = "", userLng = "";
 
-    // Trik agar audio dapat dimainkan di browser modern (wajib ada interaksi user dulu)
     window.addEventListener('touchstart', () => { beepSound.load(); }, { once: true });
     window.addEventListener('click', () => { beepSound.load(); }, { once: true });
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (p) => { 
+            userLat = p.coords.latitude; userLng = p.coords.longitude; 
+            document.getElementById('gps-status').innerHTML = "📍 GPS Terkunci (Siap Scan)";
+            document.getElementById('gps-status').style.color = "#4ade80";
+          },
+          (e) => { 
+            document.getElementById('gps-status').innerHTML = "❌ Izin GPS Ditolak / Tidak Aktif";
+            document.getElementById('gps-status').style.color = "#f87171";
+          },
+          { enableHighAccuracy: true }
+        );
+      }
+    }
 
     function onScanSuccess(decodedText) {
       if(isScanning) return; 
       
       const eskul = document.getElementById('pilihan_eskul').value;
       if (!eskul) {
-          Swal.fire({
-              icon: 'warning', title: 'Pilih Eskul!', text: 'Anda wajib memilih Ekstrakurikuler sebelum melakukan scan.',
-              background: '#1e293b', color: '#fff', confirmButtonColor: '#3b82f6'
-          });
+          Swal.fire({ icon: 'warning', title: 'Pilih Eskul!', text: 'Pilih Ekstrakurikuler terlebih dahulu.', background: '#1e293b', color: '#fff' });
           return;
       }
 
       isScanning = true;
-      
-      // Bunyikan Audio
-      beepSound.play().catch(e => console.log("Audio play error:", e));
-
+      beepSound.play().catch(e => console.log(e));
       const finalId = decodedText.trim().replace(/[^a-zA-Z0-9]/g, '');
 
-      Swal.fire({
-          title: 'Memproses...', text: 'Mengirim data ke server',
-          allowOutsideClick: false, background: '#1e293b', color: '#fff',
-          didOpen: () => { Swal.showLoading(); }
-      });
+      Swal.fire({ title: 'Memproses...', text: 'Mengirim data...', allowOutsideClick: false, background: '#1e293b', color: '#fff', didOpen: () => { Swal.showLoading(); }});
 
-      const dataScan = { id: finalId, eskul: eskul, waktu_scan: new Date().toISOString() };
-      kirimKeServer(dataScan);
-    }
-
-    function kirimKeServer(data) {
       const params = new URLSearchParams();
-      params.append("id", data.id); 
-      params.append("eskul", data.eskul);
-      params.append("waktu_scan", data.waktu_scan);
+      params.append("id", finalId); 
+      params.append("eskul", eskul);
+      params.append("waktu_scan", new Date().toISOString());
+      params.append("lat", userLat);
+      params.append("lng", userLng);
 
       fetch(urlServer, { method: "POST", body: params })
       .then(res => res.text())
       .then(pesan => {
           if (pesan.includes("Berhasil")) {
-             Swal.fire({ icon: 'success', title: 'Berhasil', text: pesan.split("|")[1] + " - " + data.eskul, timer: 2000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
-          } else if (pesan.includes("SudahScan")) {
-             Swal.fire({ icon: 'warning', title: 'Peringatan', text: pesan.split("|")[1], timer: 3000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
+             Swal.fire({ icon: 'success', title: 'Berhasil', text: pesan.split("|")[1] + " - " + eskul, timer: 2000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
+          } else if (pesan.includes("Gagal")) {
+             Swal.fire({ icon: 'error', title: 'Ditolak', text: pesan.split("|")[1], background: '#1e293b', color: '#fff' });
           } else {
-             Swal.fire({ icon: 'error', title: 'Gagal', text: pesan, background: '#1e293b', color: '#fff' });
+             Swal.fire({ icon: 'warning', title: 'Peringatan', text: pesan.split("|")[1], timer: 3000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
           }
           setTimeout(() => { isScanning = false; }, 2500);
       })
       .catch(() => {
-          scanQueue.push(data); localStorage.setItem('eskulQueue', JSON.stringify(scanQueue));
-          Swal.fire({ icon: 'info', title: 'Offline', text: 'Disimpan ke antrean', timer: 1500, background: '#1e293b', color: '#fff' });
-          setTimeout(() => { isScanning = false; }, 1500);
+          Swal.fire({ icon: 'error', title: 'Offline', text: 'Koneksi ke server terputus.', timer: 2000, background: '#1e293b', color: '#fff' });
+          setTimeout(() => { isScanning = false; }, 2000);
       });
     }
 
     function mulaiKamera() {
       html5QrcodeScanner.start({ facingMode: modeKamera }, { fps: 15, qrbox: 250 }, onScanSuccess).catch(err => console.log(err));
     }
-
     function gantiKamera() {
-      html5QrcodeScanner.stop().then(() => {
-        modeKamera = modeKamera === "environment" ? "user" : "environment";
-        mulaiKamera();
-      });
+      html5QrcodeScanner.stop().then(() => { modeKamera = modeKamera === "environment" ? "user" : "environment"; mulaiKamera(); });
     }
-
     window.onload = function() {
+      getLocation();
       html5QrcodeScanner = new Html5Qrcode("reader");
       mulaiKamera();
     };
