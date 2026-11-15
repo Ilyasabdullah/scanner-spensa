@@ -64,8 +64,16 @@
 
   <script>
     const urlServer = "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec"; 
+    
+    // Inisialisasi Audio Bunyi Beep
+    const beepSound = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3");
+
     let html5QrcodeScanner, modeKamera = "environment", isScanning = false;
     let scanQueue = JSON.parse(localStorage.getItem('eskulQueue')) || [];
+
+    // Trik agar audio dapat dimainkan di browser modern (wajib ada interaksi user dulu)
+    window.addEventListener('touchstart', () => { beepSound.load(); }, { once: true });
+    window.addEventListener('click', () => { beepSound.load(); }, { once: true });
 
     function onScanSuccess(decodedText) {
       if(isScanning) return; 
@@ -73,17 +81,17 @@
       const eskul = document.getElementById('pilihan_eskul').value;
       if (!eskul) {
           Swal.fire({
-              icon: 'warning',
-              title: 'Pilih Eskul!',
-              text: 'Anda wajib memilih Ekstrakurikuler sebelum melakukan scan.',
-              background: '#1e293b',
-              color: '#fff',
-              confirmButtonColor: '#3b82f6'
+              icon: 'warning', title: 'Pilih Eskul!', text: 'Anda wajib memilih Ekstrakurikuler sebelum melakukan scan.',
+              background: '#1e293b', color: '#fff', confirmButtonColor: '#3b82f6'
           });
           return;
       }
 
       isScanning = true;
+      
+      // Bunyikan Audio
+      beepSound.play().catch(e => console.log("Audio play error:", e));
+
       const finalId = decodedText.trim().replace(/[^a-zA-Z0-9]/g, '');
 
       Swal.fire({
@@ -107,6 +115,8 @@
       .then(pesan => {
           if (pesan.includes("Berhasil")) {
              Swal.fire({ icon: 'success', title: 'Berhasil', text: pesan.split("|")[1] + " - " + data.eskul, timer: 2000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
+          } else if (pesan.includes("SudahScan")) {
+             Swal.fire({ icon: 'warning', title: 'Peringatan', text: pesan.split("|")[1], timer: 3000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
           } else {
              Swal.fire({ icon: 'error', title: 'Gagal', text: pesan, background: '#1e293b', color: '#fff' });
           }
