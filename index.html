@@ -17,6 +17,10 @@
     #reader { width: 100%; border-radius: 8px; }
     .btn-kamera { background: linear-gradient(to right, #2563eb, #4f46e5); color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
     #gps-status { font-size: 11px; margin-top: 15px; color: #94a3b8; }
+    
+    /* STYLE UNTUK LINK LOGIN */
+    .login-link { display: inline-block; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: bold; transition: color 0.3s; cursor: pointer; }
+    .login-link:hover { color: #60a5fa; }
   </style>
 </head>
 <body>
@@ -34,14 +38,29 @@
       <div id="reader-container"><div id="reader"></div></div>
       <button class="btn-kamera" onclick="gantiKamera()">🔄 Ganti Kamera</button>
       <div id="gps-status">📍 Menunggu Izin Lokasi (GPS)...</div>
+      
+      <!-- TOMBOL / LINK LOGIN DI BAGIAN BAWAH -->
+      <a class="login-link" onclick="bukaDashboard()">
+         🔐 Login Admin / Pembina
+      </a>
   </div>
 
   <script>
+    // PASTIKAN URL INI SUDAH DIISI DENGAN URL DEPLOY APLIKASI WEB GAS ANDA
     const urlServer = "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec"; 
     const beepSound = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3");
 
     let html5QrcodeScanner, modeKamera = "environment", isScanning = false;
     let userLat = "", userLng = "";
+
+    // FUNGSI UNTUK MEMBUKA HALAMAN LOGIN/DASHBOARD
+    function bukaDashboard() {
+        if(urlServer === "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec" || urlServer === "") {
+            Swal.fire('Peringatan', 'URL Server belum diatur di script index.html', 'warning');
+        } else {
+            window.location.href = urlServer;
+        }
+    }
 
     window.addEventListener('touchstart', () => { beepSound.load(); }, { once: true });
     window.addEventListener('click', () => { beepSound.load(); }, { once: true });
@@ -106,9 +125,11 @@
     function mulaiKamera() {
       html5QrcodeScanner.start({ facingMode: modeKamera }, { fps: 15, qrbox: 250 }, onScanSuccess).catch(err => console.log(err));
     }
+    
     function gantiKamera() {
       html5QrcodeScanner.stop().then(() => { modeKamera = modeKamera === "environment" ? "user" : "environment"; mulaiKamera(); });
     }
+    
     window.onload = function() {
       getLocation();
       html5QrcodeScanner = new Html5Qrcode("reader");
