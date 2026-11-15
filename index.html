@@ -55,13 +55,12 @@
 
     // FUNGSI UNTUK MEMBUKA HALAMAN LOGIN/DASHBOARD
     function bukaDashboard() {
-        if(urlServer === "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec" || urlServer === "") {
-            Swal.fire('Peringatan', 'URL Server belum diatur di script index.html', 'warning');
+        if(!urlServer || urlServer.trim() === "") {
+            Swal.fire('Peringatan', 'URL Server belum diatur', 'warning');
         } else {
             window.location.href = urlServer;
         }
     }
-
     window.addEventListener('touchstart', () => { beepSound.load(); }, { once: true });
     window.addEventListener('click', () => { beepSound.load(); }, { once: true });
 
