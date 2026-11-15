@@ -6,82 +6,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PRESENSI EKSTRAKURIKULER</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
-      });
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    body { background-color: #0f141e; color: #ffffff; font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
-    h1 { color: #3498db; margin-bottom: 5px; font-size: 24px; }
-    .subtitle { color: #8b9bb4; font-size: 14px; margin-bottom: 15px; }
-    select { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 8px; background: #1a2233; color: white; border: 1px solid #3498db; font-size: 16px; font-weight: bold; }
-    #reader-container { background-color: #000; border-radius: 12px; padding: 5px; margin: 0 auto; max-width: 400px; border: 2px solid #3498db; overflow: hidden; }
+    body { 
+        background: linear-gradient(135deg, #0f172a, #1e1b4b); 
+        color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        margin: 0; padding: 20px; text-align: center; min-height: 100vh;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px;
+        max-width: 420px;
+        margin: 0 auto;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+    h1 { color: #60a5fa; margin-bottom: 5px; font-size: 24px; letter-spacing: 1px; }
+    .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+    select { 
+        width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 12px; 
+        background: rgba(15, 23, 42, 0.8); color: white; 
+        border: 1px solid #3b82f6; font-size: 15px; font-weight: bold;
+        outline: none; transition: 0.3s;
+    }
+    select:focus { border-color: #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+    #reader-container { 
+        background-color: #000; border-radius: 12px; padding: 5px; 
+        border: 2px solid rgba(59, 130, 246, 0.5); overflow: hidden; 
+    }
     #reader { width: 100%; border-radius: 8px; }
-    .btn-kamera { background-color: #2980b9; color: white; border: none; padding: 12px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; max-width: 400px; font-weight: bold; }
-    #fullscreen-alert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; }
-    .bg-green { background-color: #27ae60; } .bg-red { background-color: #c0392b; } .bg-blue { background-color: #2980b9; }
-    .spinner { border: 6px solid rgba(255,255,255,0.3); border-top: 6px solid #ffffff; border-radius: 50%; width: 70px; height: 70px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .btn-kamera { 
+        background: linear-gradient(to right, #2563eb, #4f46e5); color: white; border: none; 
+        padding: 14px 20px; font-size: 15px; border-radius: 12px; cursor: pointer; 
+        margin-top: 20px; width: 100%; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-kamera:active { transform: scale(0.98); }
   </style>
 </head>
 <body>
-  <h1>PRESENSI ESKUL</h1>
-  <p class="subtitle">Silakan Pilih Ekstrakurikuler & Scan Kartu</p>
+  <div class="glass-card">
+      <h1>PRESENSI ESKUL</h1>
+      <p class="subtitle">Silakan Pilih Ekstrakurikuler & Scan Kartu</p>
 
-  <select id="pilihan_eskul">
-    <option value="Pramuka">Pramuka</option>
-    <option value="Olah Raga">Olah Raga</option>
-    <option value="Seni">Seni</option>
-  </select>
+      <select id="pilihan_eskul">
+        <option value="" disabled selected>-- Pilih Ekstrakurikuler --</option>
+        <option value="Pramuka">Pramuka</option>
+        <option value="Olah Raga">Olah Raga</option>
+        <option value="Seni">Seni</option>
+      </select>
 
-  <div id="reader-container"><div id="reader"></div></div>
-  <button class="btn-kamera" onclick="gantiKamera()">🔄 Ganti Kamera</button>
-
-  <div id="fullscreen-alert">
-    <div id="alert-icon" style="font-size:80px; margin-bottom:10px;"></div>
-    <h2 id="alert-title" style="font-size:24px; margin:0 0 10px 0;"></h2>
-    <p id="alert-desc" style="font-size:16px; opacity:0.9;"></p>
+      <div id="reader-container"><div id="reader"></div></div>
+      <button class="btn-kamera" onclick="gantiKamera()">🔄 Ganti Kamera</button>
   </div>
 
   <script>
     const urlServer = "https://script.google.com/macros/s/AKfycbxza7hRUEHOpi0W8NHLjTOS4RCCDx9Dza3aea4Nt8Zvc_ZYuo-9_9xc3XCJW09CdYtl/exec"; 
-    let html5QrcodeScanner, modeKamera = "environment", isScanning = false, scanQueue = JSON.parse(localStorage.getItem('eskulQueue')) || [];
-
-    function tampilkanAlert(judul, pesan, tipe) {
-        const box = document.getElementById('fullscreen-alert');
-        box.className = tipe === 'loading' ? 'bg-blue' : (tipe === 'sukses' ? 'bg-green' : 'bg-red');
-        box.style.display = 'flex';
-        document.getElementById('alert-title').innerHTML = judul;
-        document.getElementById('alert-desc').innerHTML = pesan;
-        document.getElementById('alert-icon').innerHTML = tipe === 'loading' ? '<div class="spinner"></div>' : (tipe === 'sukses' ? '✅' : '❌');
-        
-        if(tipe !== 'loading') {
-            setTimeout(() => { box.style.display = "none"; isScanning = false; }, 1500);
-        }
-    }
+    let html5QrcodeScanner, modeKamera = "environment", isScanning = false;
+    let scanQueue = JSON.parse(localStorage.getItem('eskulQueue')) || [];
 
     function onScanSuccess(decodedText) {
       if(isScanning) return; 
-      isScanning = true;
+      
       const eskul = document.getElementById('pilihan_eskul').value;
-      const finalId = decodedText.trim().replace(/[^a-zA-Z0-9]/g, ''); // Ekstrak NISN bersih
+      if (!eskul) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Pilih Eskul!',
+              text: 'Anda wajib memilih Ekstrakurikuler sebelum melakukan scan.',
+              background: '#1e293b',
+              color: '#fff',
+              confirmButtonColor: '#3b82f6'
+          });
+          return;
+      }
+
+      isScanning = true;
+      const finalId = decodedText.trim().replace(/[^a-zA-Z0-9]/g, '');
+
+      Swal.fire({
+          title: 'Memproses...', text: 'Mengirim data ke server',
+          allowOutsideClick: false, background: '#1e293b', color: '#fff',
+          didOpen: () => { Swal.showLoading(); }
+      });
 
       const dataScan = { id: finalId, eskul: eskul, waktu_scan: new Date().toISOString() };
-
-      if (!navigator.onLine) {
-         scanQueue.push(dataScan);
-         localStorage.setItem('eskulQueue', JSON.stringify(scanQueue));
-         tampilkanAlert("OFFLINE", "Disimpan ke antrean.", "sukses");
-      } else {
-         kirimKeServer(dataScan);
-      }
+      kirimKeServer(dataScan);
     }
 
     function kirimKeServer(data) {
-      tampilkanAlert("MEMPROSES...", "Mengirim data ke server.", "loading");
       const params = new URLSearchParams();
       params.append("id", data.id); 
       params.append("eskul", data.eskul);
@@ -91,14 +106,16 @@
       .then(res => res.text())
       .then(pesan => {
           if (pesan.includes("Berhasil")) {
-             tampilkanAlert("SUKSES", pesan.split("|")[1] + "<br>" + data.eskul, "sukses");
+             Swal.fire({ icon: 'success', title: 'Berhasil', text: pesan.split("|")[1] + " - " + data.eskul, timer: 2000, showConfirmButton: false, background: '#1e293b', color: '#fff' });
           } else {
-             tampilkanAlert("GAGAL", pesan, "error");
+             Swal.fire({ icon: 'error', title: 'Gagal', text: pesan, background: '#1e293b', color: '#fff' });
           }
+          setTimeout(() => { isScanning = false; }, 2500);
       })
       .catch(() => {
           scanQueue.push(data); localStorage.setItem('eskulQueue', JSON.stringify(scanQueue));
-          tampilkanAlert("OFFLINE", "Gagal kirim, masuk antrean.", "sukses");
+          Swal.fire({ icon: 'info', title: 'Offline', text: 'Disimpan ke antrean', timer: 1500, background: '#1e293b', color: '#fff' });
+          setTimeout(() => { isScanning = false; }, 1500);
       });
     }
 
