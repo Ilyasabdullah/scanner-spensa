@@ -4,181 +4,119 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Scanner Presensi SMP Negeri 1 Maba</title>
-  
-  <link rel="icon" type="image/png" href="https://img.icons8.com/color/512/qr-code.png">
-  <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/qr-code.png">
-
+  <title>PRESENSI EKSTRAKURIKULER</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
+      });
+    }
+  </script>
   <style>
     body { background-color: #0f141e; color: #ffffff; font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
-    h1 { color: #2ecc71; margin-bottom: 5px; font-size: 24px; }
-    .subtitle { color: #8b9bb4; font-size: 14px; margin-bottom: 25px; }
-    
-    /* Container Kamera dibuat Relative untuk tempat Overlay */
-    #reader-container { background-color: #000000; border-radius: 12px; padding: 5px; margin: 0 auto; max-width: 400px; position: relative; }
-    #reader { width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid #2ecc71; }
-    
-    /* ANIMASI LOADING OVERLAY */
-    #loading-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85); z-index: 10; border-radius: 12px;
-      display: none; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .spinner {
-      border: 5px solid #3a4556; border-top: 5px solid #2ecc71;
-      border-radius: 50%; width: 50px; height: 50px;
-      animation: spin 1s linear infinite; margin-bottom: 15px;
-    }
+    h1 { color: #3498db; margin-bottom: 5px; font-size: 24px; }
+    .subtitle { color: #8b9bb4; font-size: 14px; margin-bottom: 15px; }
+    select { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 8px; background: #1a2233; color: white; border: 1px solid #3498db; font-size: 16px; font-weight: bold; }
+    #reader-container { background-color: #000; border-radius: 12px; padding: 5px; margin: 0 auto; max-width: 400px; border: 2px solid #3498db; overflow: hidden; }
+    #reader { width: 100%; border-radius: 8px; }
+    .btn-kamera { background-color: #2980b9; color: white; border: none; padding: 12px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; max-width: 400px; font-weight: bold; }
+    #fullscreen-alert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; }
+    .bg-green { background-color: #27ae60; } .bg-red { background-color: #c0392b; } .bg-blue { background-color: #2980b9; }
+    .spinner { border: 6px solid rgba(255,255,255,0.3); border-top: 6px solid #ffffff; border-radius: 50%; width: 70px; height: 70px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { color: #2ecc71; font-weight: bold; font-size: 16px; letter-spacing: 1px;}
-
-    #error-box { background-color: #1e2532; color: #ff6b6b; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 400px; display: none; font-size: 14px; border: 1px solid #3a4556; }
-    #success-box { background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 400px; display: none; font-weight: bold; }
-    
-    .btn-kamera { background-color: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.2s; }
-    .btn-kamera:active { background-color: #1f6391; transform: translateY(2px); }
-    
-    .footer-status { color: #5c6b82; font-size: 12px; margin-top: 20px; line-height: 1.8; }
   </style>
 </head>
 <body>
-  <h1>PRESENSI SISWA</h1>
-  <p class="subtitle">SMP NEGERI 1 MABA</p>
-  
-  <div id="reader-container">
-    <div id="reader"></div>
-    <div id="loading-overlay">
-      <div class="spinner"></div>
-      <div class="loading-text">Memproses...</div>
-    </div>
-  </div>
-  
+  <h1>PRESENSI ESKUL</h1>
+  <p class="subtitle">Silakan Pilih Ekstrakurikuler & Scan Kartu</p>
+
+  <select id="pilihan_eskul">
+    <option value="Pramuka">Pramuka</option>
+    <option value="Olah Raga">Olah Raga</option>
+    <option value="Seni">Seni</option>
+  </select>
+
+  <div id="reader-container"><div id="reader"></div></div>
   <button class="btn-kamera" onclick="gantiKamera()">🔄 Ganti Kamera</button>
 
-  <div id="error-box"></div>
-  <div id="success-box"></div>
-  <div class="footer-status">
-    <span id="cam-status">Kamera: Menyiapkan...</span><br>
-    <span id="db-status">Menunggu Scan...</span><br>
-    <span id="gps-status">GPS: Memeriksa Lokasi...</span>
+  <div id="fullscreen-alert">
+    <div id="alert-icon" style="font-size:80px; margin-bottom:10px;"></div>
+    <h2 id="alert-title" style="font-size:24px; margin:0 0 10px 0;"></h2>
+    <p id="alert-desc" style="font-size:16px; opacity:0.9;"></p>
   </div>
 
   <script>
-    // MASUKKAN URL GOOGLE SCRIPT (/exec) ANDA DI SINI
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyGuFy7N8zag_jw45vISQLsXx2oyjywa_3P9dcSWkODG5tzPw3pQTVq2OSn2rgYo2qC/exec"; 
+    const urlServer = "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI"; 
+    let html5QrcodeScanner, modeKamera = "environment", isScanning = false, scanQueue = JSON.parse(localStorage.getItem('eskulQueue')) || [];
 
-    const beepSound = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3");
-
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const errorBox = document.getElementById('error-box');
-    const successBox = document.getElementById('success-box');
-    const dbStatus = document.getElementById('db-status');
-    const gpsStatus = document.getElementById('gps-status');
-    const camStatus = document.getElementById('cam-status');
-    
-    let html5QrcodeScanner;
-    let userLat = ""; let userLng = "";
-    let modeKamera = "environment"; 
-    let isScanning = false;
-
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(p => {
-          userLat = p.coords.latitude; userLng = p.coords.longitude;
-          gpsStatus.innerText = "GPS: " + userLat.toFixed(5) + ", " + userLng.toFixed(5);
-          gpsStatus.style.color = "#2ecc71";
-        }, e => { gpsStatus.innerText = "GPS: Izin Ditolak"; gpsStatus.style.color = "#ff6b6b"; }, { enableHighAccuracy: true });
-      }
+    function tampilkanAlert(judul, pesan, tipe) {
+        const box = document.getElementById('fullscreen-alert');
+        box.className = tipe === 'loading' ? 'bg-blue' : (tipe === 'sukses' ? 'bg-green' : 'bg-red');
+        box.style.display = 'flex';
+        document.getElementById('alert-title').innerHTML = judul;
+        document.getElementById('alert-desc').innerHTML = pesan;
+        document.getElementById('alert-icon').innerHTML = tipe === 'loading' ? '<div class="spinner"></div>' : (tipe === 'sukses' ? '✅' : '❌');
+        
+        if(tipe !== 'loading') {
+            setTimeout(() => { box.style.display = "none"; isScanning = false; }, 1500);
+        }
     }
 
     function onScanSuccess(decodedText) {
-      if(isScanning) {
-        // 1. Mainkan Suara
-        beepSound.play().catch(err => console.log("Suara diblokir browser: ", err));
+      if(isScanning) return; 
+      isScanning = true;
+      const eskul = document.getElementById('pilihan_eskul').value;
+      const finalId = decodedText.trim().replace(/[^a-zA-Z0-9]/g, ''); // Ekstrak NISN bersih
 
-        // 2. Hentikan Scanner & Tampilkan Layar Gelap Loading
-        html5QrcodeScanner.pause();
-        loadingOverlay.style.display = 'flex';
-        dbStatus.innerText = "Mengirim Data...";
-        
-        // 3. Kirim Data ke Google
-        const params = new URLSearchParams();
-        params.append("id", decodedText);
-        params.append("lat", userLat);
-        params.append("lng", userLng);
+      const dataScan = { id: finalId, eskul: eskul, waktu_scan: new Date().toISOString() };
 
-        // Mengirim Data ke Google (Penutup mata "no-cors" DIHAPUS)
-        fetch(scriptURL, { method: "POST", body: params })
-        .then(response => response.text()) // Membaca teks balasan dari Google Script
-        .then(pesanDariServer => {
-          loadingOverlay.style.display = 'none';
-          dbStatus.innerText = "Menunggu Scan...";
-          
-          // Cek apakah pesannya menandakan SUKSES (Berisi kata Berhasil / Hadir / Terlambat)
-          if (pesanDariServer.includes("Berhasil") || pesanDariServer.includes("Hadir") || pesanDariServer.includes("Terlambat") || pesanDariServer.includes("Tepat")) {
-            successBox.style.display = 'block';
-            successBox.innerHTML = "✅ " + pesanDariServer;
-          } else {
-            // Jika DITOLAK (Kejauhan, Dobel Scan, Jam Tutup, NIP Salah, dll)
-            errorBox.style.display = 'block';
-            errorBox.innerHTML = "❌ " + pesanDariServer;
-          }
-          
-          // Beri waktu tampil 3,5 detik agar guru sempat membaca pesannya
-          setTimeout(() => { 
-            successBox.style.display = 'none'; 
-            errorBox.style.display = 'none';
-            html5QrcodeScanner.resume(); 
-          }, 3500);
-        })
-        .catch(err => {
-          loadingOverlay.style.display = 'none';
-          errorBox.style.display = 'block';
-          errorBox.innerHTML = "Gagal Koneksi: Pastikan Internet Aktif";
-          dbStatus.innerText = "Menunggu Scan...";
-          
-          setTimeout(() => { 
-            errorBox.style.display = 'none'; 
-            html5QrcodeScanner.resume(); 
-          }, 3000);
-        });
+      if (!navigator.onLine) {
+         scanQueue.push(dataScan);
+         localStorage.setItem('eskulQueue', JSON.stringify(scanQueue));
+         tampilkanAlert("OFFLINE", "Disimpan ke antrean.", "sukses");
+      } else {
+         kirimKeServer(dataScan);
       }
     }
 
-    function mulaiKamera() {
-      html5QrcodeScanner.start(
-        { facingMode: modeKamera }, 
-        { fps: 10, qrbox: 250 }, 
-        onScanSuccess
-      ).then(() => {
-        isScanning = true;
-        camStatus.innerText = "Kamera: " + (modeKamera === "environment" ? "Belakang" : "Depan");
-      }).catch(err => {
-        errorBox.style.display = 'block';
-        errorBox.innerHTML = "Error Kamera: " + err;
+    function kirimKeServer(data) {
+      tampilkanAlert("MEMPROSES...", "Mengirim data ke server.", "loading");
+      const params = new URLSearchParams();
+      params.append("id", data.id); 
+      params.append("eskul", data.eskul);
+      params.append("waktu_scan", data.waktu_scan);
+
+      fetch(urlServer, { method: "POST", body: params })
+      .then(res => res.text())
+      .then(pesan => {
+          if (pesan.includes("Berhasil")) {
+             tampilkanAlert("SUKSES", pesan.split("|")[1] + "<br>" + data.eskul, "sukses");
+          } else {
+             tampilkanAlert("GAGAL", pesan, "error");
+          }
+      })
+      .catch(() => {
+          scanQueue.push(data); localStorage.setItem('eskulQueue', JSON.stringify(scanQueue));
+          tampilkanAlert("OFFLINE", "Gagal kirim, masuk antrean.", "sukses");
       });
     }
 
+    function mulaiKamera() {
+      html5QrcodeScanner.start({ facingMode: modeKamera }, { fps: 15, qrbox: 250 }, onScanSuccess).catch(err => console.log(err));
+    }
+
     function gantiKamera() {
-      if (isScanning) {
-        html5QrcodeScanner.stop().then(() => {
-          isScanning = false;
-          modeKamera = (modeKamera === "environment") ? "user" : "environment";
-          mulaiKamera();
-        }).catch(err => {
-          errorBox.style.display = 'block';
-          errorBox.innerHTML = "Gagal menukar kamera: " + err;
-        });
-      }
+      html5QrcodeScanner.stop().then(() => {
+        modeKamera = modeKamera === "environment" ? "user" : "environment";
+        mulaiKamera();
+      });
     }
 
     window.onload = function() {
-      getLocation();
       html5QrcodeScanner = new Html5Qrcode("reader");
       mulaiKamera();
     };
   </script>
 </body>
 </html>
-
